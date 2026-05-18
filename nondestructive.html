@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>非破壊検査について学ぶ — フーリエ変換ラボ v1.3</title>
+<title>非破壊検査の世界を探究しよう — フーリエ変換ラボ v1.3</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" onload="renderMathInElement(document.body)"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
 <style>
 :root{
   --teal:#3AABA8;
@@ -26,30 +26,26 @@
   --shadow-lg:0 12px 32px rgba(44,51,56,0.10);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:auto}
 body{
   font-family:"Meiryo","メイリオ",sans-serif;
   background:linear-gradient(180deg,var(--bg) 0%,var(--cream-light) 100%);
-  color:var(--charcoal);
-  line-height:1.7;
+  color:var(--charcoal);line-height:1.7;
 }
-.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.wrap{max-width:980px;margin:0 auto;padding:24px 20px 60px}
 
 /* ===== ヘッダー帯 ===== */
 .top-bar{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:10px 0 16px;border-bottom:1.5px solid var(--border);margin-bottom:24px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 0 14px;border-bottom:1.5px solid var(--border);margin-bottom:20px;
 }
 .back-link{
   display:inline-flex;align-items:center;gap:6px;
   color:var(--teal);text-decoration:none;font-weight:800;font-size:13px;
-  padding:6px 12px;border-radius:8px;
-  transition:background .15s;
+  padding:6px 12px;border-radius:8px;transition:background .15s;
 }
 .back-link:hover{background:rgba(58,171,168,0.10)}
-.title-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.page-title{font-size:18px;font-weight:900;color:var(--navy)}
-.page-title .sub{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
+.page-title-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:900;color:var(--navy);letter-spacing:.01em}
 .version{
   background:var(--cream);color:var(--orange-dark);
   padding:4px 11px;border-radius:12px;
@@ -57,98 +53,110 @@ body{
   border:1px solid rgba(232,138,10,0.3);
 }
 
-/* ===== セクション共通 ===== */
-section{margin-bottom:40px}
-section h2{
-  font-size:22px;font-weight:900;color:var(--navy);
-  margin-bottom:14px;line-height:1.3;
-  border-left:6px solid var(--teal);padding-left:12px;
-}
-section h2 .num{
-  display:inline-flex;align-items:center;justify-content:center;
-  background:var(--teal);color:#fff;border-radius:10px;
-  font-size:13px;padding:2px 10px;margin-right:10px;letter-spacing:.04em;
-}
-.lead{
-  font-size:16px;color:var(--charcoal);margin-bottom:16px;font-weight:600;
-}
-p{margin-bottom:14px;font-size:14px;color:var(--charcoal)}
-p.note{font-size:13px;color:var(--muted)}
-b,strong{color:var(--orange-dark);font-weight:800}
-
-/* ===== ヒーロー (セクション 1) ===== */
-.hero{
-  display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center;
-  background:var(--card);border-radius:14px;padding:24px;
-  box-shadow:var(--shadow);border:1px solid var(--border);
-}
-.hero-art{display:flex;align-items:center;justify-content:center}
-.hero-art svg{width:100%;height:auto;max-width:380px}
-
-/* ===== なぜ使えるか (セクション 2) ===== */
-.why-grid{
-  display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:center;
-  background:var(--card);border-radius:14px;padding:24px;
-  box-shadow:var(--shadow);border:1px solid var(--border);
-}
-.why-art{display:flex;align-items:center;justify-content:center}
-.why-art svg{width:100%;height:auto;max-width:380px}
-.formula-card{
-  background:var(--cream-light);border:1px solid rgba(232,138,10,0.20);
-  border-radius:10px;padding:14px 18px;margin:14px 0;
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-}
-.formula-card .label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em}
-.formula-card .formula{font-size:18px;color:var(--navy)}
-.formula-card .legend{font-size:11px;color:var(--muted)}
-
-/* ===== 実例カード (セクション 3) ===== */
-.cases-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
-}
-.case-card{
+/* ===== 導入文 ===== */
+.intro{
   background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:18px 18px 16px;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;gap:8px;
+  padding:18px 22px;margin-bottom:28px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:center;
+}
+.intro p{font-size:14px;color:var(--charcoal);margin-bottom:8px}
+.intro p:last-child{margin-bottom:0}
+.intro .ill{display:flex;align-items:center;justify-content:center}
+.intro svg{width:100%;height:auto;max-width:200px}
+
+/* ===== 課題カード ===== */
+.task-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:22px 24px;margin-bottom:22px;box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+}
+.task-card::before{
+  content:'';position:absolute;top:0;left:0;width:6px;height:100%;
+  background:linear-gradient(180deg,var(--teal),var(--teal-dark));
+}
+.task-card h2{
+  font-size:20px;font-weight:900;color:var(--navy);line-height:1.3;
+  margin-bottom:6px;padding-left:6px;
+}
+.task-card h2 .badge{
+  display:inline-block;background:var(--orange);color:#fff;
+  font-size:11px;font-weight:900;padding:3px 10px;border-radius:10px;
+  letter-spacing:.05em;vertical-align:middle;margin-right:8px;
+}
+.task-do{margin:14px 0 16px;padding:14px 18px;background:var(--cream-light);border-radius:10px}
+.task-do h3{
+  font-size:13px;font-weight:800;color:var(--orange-dark);
+  letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase;
+}
+.task-do ul{padding-left:20px;margin:0}
+.task-do li{font-size:13px;color:var(--charcoal);margin-bottom:4px;line-height:1.6}
+.task-do li:last-child{margin-bottom:0}
+
+/* 折りたたみ解説 */
+.reveal-btn{
+  font-family:inherit;cursor:pointer;
+  background:var(--card);border:1.5px solid var(--teal);
+  color:var(--teal);font-size:13px;font-weight:800;
+  padding:8px 18px;border-radius:24px;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:all .15s;
+}
+.reveal-btn:hover{background:var(--teal);color:#fff}
+.reveal-btn[aria-expanded="true"]{background:var(--teal);color:#fff}
+.task-explain{
+  margin-top:14px;padding:18px 20px;
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  border-left:4px solid var(--teal);
+}
+.task-explain[hidden]{display:none}
+.task-explain h3{font-size:12px;font-weight:800;color:var(--teal);
+  letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase}
+.task-explain p{font-size:14px;color:var(--charcoal);margin-bottom:10px;line-height:1.75}
+.task-explain p:last-child{margin-bottom:0}
+.task-explain b{color:var(--orange-dark);font-weight:800}
+.task-explain .formula-card{
+  background:var(--cream-light);border:1px solid rgba(232,138,10,0.20);
+  border-radius:10px;padding:16px 20px;margin:12px 0;text-align:center;
+}
+.task-explain .formula-card .katex{font-size:1.35em;color:var(--navy)}
+.task-explain .takeaway{
+  background:rgba(46,142,196,0.08);border-left:4px solid var(--blue);
+  padding:12px 16px;border-radius:6px;margin-top:14px;font-size:14px;
+}
+
+/* ===== 応用事例 (折りたたみ) ===== */
+.cases-section{
+  margin:36px 0 28px;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:18px 22px;box-shadow:var(--shadow);
+}
+.cases-section > .reveal-btn{font-size:14px;padding:10px 22px}
+.cases-body[hidden]{display:none}
+.cases-body{margin-top:18px}
+.cases-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.case-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;display:flex;gap:12px;
 }
 .case-card .icon-wrap{
-  width:60px;height:60px;display:flex;align-items:center;justify-content:center;
-  background:var(--cream-light);border-radius:12px;
+  width:48px;height:48px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--cream-light);border-radius:10px;
   border:1px solid rgba(232,138,10,0.20);
 }
-.case-card .icon-wrap svg{width:38px;height:38px}
-.case-card h3{font-size:15px;font-weight:800;color:var(--navy);line-height:1.3}
-.case-card h3 .emoji{margin-right:4px}
-.case-card p{font-size:12px;color:var(--charcoal);line-height:1.55;margin-bottom:0}
-
-/* ===== チャレンジ (セクション 4) ===== */
-.challenge-list{display:flex;flex-direction:column;gap:12px}
-.challenge{
-  background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:14px 18px;display:flex;align-items:flex-start;gap:14px;
-  box-shadow:var(--shadow);
-}
-.challenge .badge{
-  flex-shrink:0;width:36px;height:36px;border-radius:50%;
-  background:linear-gradient(135deg,var(--orange),var(--orange-dark));
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:14px;box-shadow:0 2px 6px rgba(232,138,10,0.30);
-}
-.challenge .body h4{font-size:14px;font-weight:800;color:var(--charcoal);margin-bottom:4px}
-.challenge .body p{font-size:12px;color:var(--muted);margin:0}
+.case-card .icon-wrap svg{width:30px;height:30px}
+.case-card h4{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:4px;line-height:1.3}
+.case-card p{font-size:11.5px;color:var(--charcoal);line-height:1.6;margin:0}
 
 /* ===== 下部 CTA ===== */
-.cta{
-  text-align:center;margin-top:36px;
-}
+.cta{text-align:center;margin-top:38px}
 .cta-btn{
   display:inline-flex;align-items:center;gap:8px;
   background:linear-gradient(135deg,var(--teal),var(--teal-dark));
   color:#fff;text-decoration:none;
-  padding:14px 28px;border-radius:14px;
+  padding:14px 32px;border-radius:14px;
   font-weight:900;font-size:15px;letter-spacing:.02em;
   box-shadow:0 4px 14px rgba(58,171,168,0.30);
-  transition:transform .1s, box-shadow .15s;
+  transition:transform .1s,box-shadow .15s;
 }
 .cta-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(58,171,168,0.40)}
 
@@ -158,17 +166,13 @@ footer{
 }
 
 /* ===== レスポンシブ ===== */
-@media (max-width:900px){
-  .hero,.why-grid{grid-template-columns:1fr}
-  .cases-grid{grid-template-columns:repeat(2,1fr)}
-}
-@media (max-width:600px){
-  .wrap{padding:18px 14px 50px}
-  section h2{font-size:18px}
-  .lead{font-size:14px}
+@media (max-width:760px){
+  .intro{grid-template-columns:1fr}
+  .intro .ill{order:2;max-width:200px;margin:0 auto}
   .cases-grid{grid-template-columns:1fr}
-  .hero,.why-grid{padding:18px}
-  .formula-card .formula{font-size:16px}
+  .task-card{padding:18px}
+  .task-card h2{font-size:17px}
+  .task-explain{padding:14px}
 }
 </style>
 </head>
@@ -177,215 +181,229 @@ footer{
 
 <div class="top-bar">
   <a class="back-link" href="index.html">← フーリエ変換ラボに戻る</a>
-  <div class="title-row">
-    <div class="page-title">非破壊検査について学ぶ<span class="sub">叩いて、聞いて、中を知る</span></div>
+  <div class="page-title-row">
+    <div class="page-title">非破壊検査の世界を探究しよう</div>
   </div>
   <div class="version">v1.3</div>
 </div>
 
-<!-- ================ Section 1 ================ -->
-<section>
-  <h2><span class="num">1</span>非破壊検査とは何か</h2>
-  <div class="hero">
-    <div>
-      <p class="lead"><b>対象を壊さずに、内部の状態を調べる技術</b>。これが非破壊検査 (NDI / Non-Destructive Inspection) である。</p>
-      <p>橋やトンネルを一度分解して中を確認することは現実には不可能だ。だから、外から振動や音を与え、その応答から内部を推定する手法が必要になる。</p>
-      <p>叩いた瞬間に発生する振動は、複数の sin 波が重なってできている。これを <b>フーリエ変換</b>(波形を周波数成分に分解する数学的操作) にかけると、対象に固有のピーク周波数が現れる。これが <b>固有振動数</b>(物それぞれが持つ、揺れやすい周波数) だ。</p>
-      <p>内部にヒビや空洞、腐食などの変化が起きると、固有振動数も変化する。つまり、叩いてピーク周波数を測れば、開けずに状態を推定できる。</p>
-      <p class="note">フーリエ変換ラボでは、対象を叩いた振動を実際に観測できる。</p>
-    </div>
-    <div class="hero-art">
-      <!-- 人が壁を叩いて音波が広がる SVG -->
-      <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" aria-label="人が壁を叩いて音波が広がる">
-        <!-- ground -->
-        <line x1="0" y1="250" x2="400" y2="250" stroke="#1E3A5F" stroke-width="2.5"/>
-        <!-- 壁 (cream + frame) -->
-        <rect x="240" y="80" width="130" height="170" fill="#F5E4C4" stroke="#2C3338" stroke-width="2.5"/>
-        <line x1="240" y1="130" x2="370" y2="130" stroke="#2C3338" stroke-width="1" stroke-dasharray="4 4" opacity="0.4"/>
-        <line x1="240" y1="180" x2="370" y2="180" stroke="#2C3338" stroke-width="1" stroke-dasharray="4 4" opacity="0.4"/>
-        <!-- ヒビ (アクセント) -->
-        <polyline points="305,90 300,110 312,125 302,145 315,170 305,195" fill="none" stroke="#E88A0A" stroke-width="2" opacity="0.7"/>
-        <!-- 人物 (シンプル) -->
-        <circle cx="100" cy="120" r="22" fill="#3AABA8"/>
-        <line x1="100" y1="142" x2="100" y2="210" stroke="#3AABA8" stroke-width="12" stroke-linecap="round"/>
-        <line x1="100" y1="210" x2="78" y2="250" stroke="#3AABA8" stroke-width="9" stroke-linecap="round"/>
-        <line x1="100" y1="210" x2="124" y2="250" stroke="#3AABA8" stroke-width="9" stroke-linecap="round"/>
-        <line x1="100" y1="165" x2="170" y2="155" stroke="#3AABA8" stroke-width="9" stroke-linecap="round"/>
-        <!-- ハンマー -->
-        <line x1="170" y1="155" x2="215" y2="140" stroke="#2C3338" stroke-width="6" stroke-linecap="round"/>
-        <rect x="207" y="125" width="28" height="22" fill="#E88A0A" stroke="#c97208" stroke-width="1.5" rx="3"/>
-        <!-- 衝撃点 -->
-        <circle cx="240" cy="140" r="6" fill="#E88A0A" opacity="0.9"/>
-        <!-- 音波 (壁を貫いて広がる弧) -->
-        <path d="M 252 110 Q 280 140 252 170" fill="none" stroke="#E88A0A" stroke-width="2.2" opacity="0.85"/>
-        <path d="M 262 95  Q 305 140 262 185" fill="none" stroke="#E88A0A" stroke-width="2"   opacity="0.6"/>
-        <path d="M 272 80  Q 330 140 272 200" fill="none" stroke="#E88A0A" stroke-width="1.8" opacity="0.4"/>
-      </svg>
+<!-- ===== 導入 ===== -->
+<div class="intro">
+  <div>
+    <p>物には固有振動数 (物それぞれが持つ揺れやすい周波数) がある。中の状態が変わると、これも変化する。この性質を使えば、物を壊さずに中の状態を調べられる。これが <b>非破壊検査</b> だ。</p>
+    <p>以下の課題に、まずは自分で取り組む。予想を立て、ラボで測定し、自分の発見を確認してから解説を開く。</p>
+  </div>
+  <div class="ill">
+    <!-- 簡素なヒーロー: 物体 + 音波 -->
+    <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="80" y="60" width="80" height="100" rx="4" fill="#F5E4C4" stroke="#2C3338" stroke-width="2.5"/>
+      <polyline points="120,72 116,90 126,102 118,118 128,138 122,154" fill="none" stroke="#E88A0A" stroke-width="2" opacity="0.7"/>
+      <path d="M 55 85  Q 30 110 55 135" fill="none" stroke="#3AABA8" stroke-width="2.5"/>
+      <path d="M 45 75  Q 12 110 45 145" fill="none" stroke="#3AABA8" stroke-width="2"   opacity="0.6"/>
+      <path d="M 35 65  Q -6 110 35 155" fill="none" stroke="#3AABA8" stroke-width="1.8" opacity="0.4"/>
+      <line x1="0" y1="175" x2="220" y2="175" stroke="#1E3A5F" stroke-width="2"/>
+    </svg>
+  </div>
+</div>
+
+<!-- ===== 課題 1 ===== -->
+<article class="task-card">
+  <h2><span class="badge">課題 1</span>硬さで周波数は変わるか？</h2>
+  <div class="task-do">
+    <h3>やってみよう</h3>
+    <ul>
+      <li>木の棒・金属棒・スポンジ・プラスチック板など、硬さが違う物を用意する</li>
+      <li>加速度センサーモードか音モードでラボに接続し、それぞれを叩く</li>
+      <li>予想を立てる: 硬い物と柔らかい物、どちらの周波数が高くなるか</li>
+      <li>実際に測定し、ピーク周波数を記録して比較する</li>
+    </ul>
+  </div>
+  <button class="reveal-btn" type="button" data-target="explain1" aria-expanded="false">▼ 解説を開く</button>
+  <div class="task-explain" id="explain1" hidden>
+    <h3>解説</h3>
+    <p>硬い物ほど周波数は高くなる。これは次の式で表せる。</p>
+    <div class="formula-card">$$ f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} $$</div>
+    <p>$f$ は固有振動数、$k$ は剛性 (硬さ)、$m$ は質量。式から、$k$ が大きいほど $f$ も大きくなる。だから金属棒は木の棒より高い周波数で鳴る。剛性 $k$ が大きいからだ。</p>
+    <p>逆にスポンジのような柔らかい物は $k$ が小さいので、低い周波数しか出ない。</p>
+  </div>
+</article>
+
+<!-- ===== 課題 2 ===== -->
+<article class="task-card">
+  <h2><span class="badge">課題 2</span>大きさで周波数は変わるか？</h2>
+  <div class="task-do">
+    <h3>やってみよう</h3>
+    <ul>
+      <li>同じ材質でサイズが違う物を用意する (長い棒と短い棒、大きいコップと小さいコップなど)</li>
+      <li>予想を立てる: サイズが大きい物と小さい物、どちらの周波数が高くなるか</li>
+      <li>それぞれ叩いて測定し、ピーク周波数を比較する</li>
+    </ul>
+  </div>
+  <button class="reveal-btn" type="button" data-target="explain2" aria-expanded="false">▼ 解説を開く</button>
+  <div class="task-explain" id="explain2" hidden>
+    <h3>解説</h3>
+    <p>小さい物ほど周波数は高くなる。同じ材質ならサイズが小さいほど質量 $m$ が小さくなり、$k/m$ の比が大きくなる。だから式 $f = \dfrac{1}{2\pi}\sqrt{k/m}$ により $f$ も大きくなる。</p>
+    <div class="formula-card">$$ f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} $$</div>
+    <p>身近な例: 小さい鈴は高い音で鳴る。大きな鐘は低い音で鳴る。原理は同じだ。</p>
+  </div>
+</article>
+
+<!-- ===== 課題 3 ===== -->
+<article class="task-card">
+  <h2><span class="badge">課題 3</span>中身で周波数は変わるか？</h2>
+  <div class="task-do">
+    <h3>やってみよう</h3>
+    <ul>
+      <li>空のペットボトルと、水を入れたペットボトルを叩いて比べる</li>
+      <li>空き缶と、中身が入った缶も比べる</li>
+      <li>予想を立てる: 中身が増えると周波数はどうなるか</li>
+      <li>測定して比較する</li>
+    </ul>
+  </div>
+  <button class="reveal-btn" type="button" data-target="explain3" aria-expanded="false">▼ 解説を開く</button>
+  <div class="task-explain" id="explain3" hidden>
+    <h3>解説</h3>
+    <p>中身が増えれば質量 $m$ が大きくなる。式 $f = \dfrac{1}{2\pi}\sqrt{k/m}$ により、$m$ が大きくなれば $f$ は小さくなる。だから水入りのペットボトルは空のペットボトルより低い周波数で鳴る。</p>
+    <div class="formula-card">$$ f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} $$</div>
+    <p class="takeaway"><b>ここが重要</b>: 外から見えない中身でも、周波数を測れば違いが分かる。これが非破壊検査の入口だ。</p>
+  </div>
+</article>
+
+<!-- ===== 課題 4 ===== -->
+<article class="task-card">
+  <h2><span class="badge">課題 4</span>状態の違いで周波数は変わるか？</h2>
+  <div class="task-do">
+    <h3>やってみよう</h3>
+    <ul>
+      <li>健全な木の棒と、ヒビが入った (または折った) 木の棒を比べる</li>
+      <li>潰さない紙コップと、潰した紙コップを比べる</li>
+      <li>同じ物の状態の違いだけで、ピーク周波数が変わるか確かめる</li>
+    </ul>
+  </div>
+  <button class="reveal-btn" type="button" data-target="explain4" aria-expanded="false">▼ 解説を開く</button>
+  <div class="task-explain" id="explain4" hidden>
+    <h3>解説</h3>
+    <p>ヒビが入ったり形が崩れたりすると、剛性 $k$ が下がる。質量 $m$ はほぼ変わらない。だから式 $f = \dfrac{1}{2\pi}\sqrt{k/m}$ により $f$ は下がる。</p>
+    <div class="formula-card">$$ f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} $$</div>
+    <p class="takeaway"><b>これがまさに非破壊検査の原理だ</b>。橋やトンネルに微小なヒビが入っているかを、人が中を開けて確認することはできない。しかし、叩いて周波数を測れば、健全なときの周波数と比較することで「壊れているかどうか」を推定できる。</p>
+  </div>
+</article>
+
+<!-- ===== 課題 5 ===== -->
+<article class="task-card">
+  <h2><span class="badge">課題 5</span>身の回りの物で実験しよう</h2>
+  <div class="task-do">
+    <h3>やってみよう</h3>
+    <ul>
+      <li>机・椅子・床・壁・コップ・本など、身の回りの物を叩いて測定する</li>
+      <li>それぞれのピーク周波数を記録する</li>
+      <li>同じ物でも叩く場所を変えると、周波数は変わるか</li>
+    </ul>
+  </div>
+  <button class="reveal-btn" type="button" data-target="explain5" aria-expanded="false">▼ 解説を開く</button>
+  <div class="task-explain" id="explain5" hidden>
+    <h3>解説</h3>
+    <p>身の回りのあらゆる物が、それぞれ固有の周波数を持っている。物の指紋のようなものだ。これを使えば、見た目が同じ物でも、内部の材質や状態の違いを見抜ける。</p>
+    <p>同じ机でも、端と中央で周波数が異なる場合がある。叩いた場所によって振動の伝わり方が変わるからだ。プロの検査では、こうした条件もコントロールして測定する。</p>
+  </div>
+</article>
+
+<!-- ===== 応用事例 (折りたたみ) ===== -->
+<div class="cases-section">
+  <button class="reveal-btn" type="button" data-target="casesBody" aria-expanded="false">▼ さらに学ぼう: 実際の応用事例を見る</button>
+  <div class="cases-body" id="casesBody" hidden>
+    <div class="cases-grid">
+
+      <div class="case-card">
+        <div class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 60 60"><path d="M5 45 L55 45" stroke="#1E3A5F" stroke-width="3" fill="none"/><path d="M5 45 Q15 20 30 20 Q45 20 55 45" stroke="#3AABA8" stroke-width="3" fill="none"/><line x1="15" y1="36" x2="15" y2="45" stroke="#2C3338" stroke-width="1.5"/><line x1="25" y1="26" x2="25" y2="45" stroke="#2C3338" stroke-width="1.5"/><line x1="35" y1="26" x2="35" y2="45" stroke="#2C3338" stroke-width="1.5"/><line x1="45" y1="36" x2="45" y2="45" stroke="#2C3338" stroke-width="1.5"/></svg>
+        </div>
+        <div>
+          <h4>🌉 橋梁の健全性モニタリング</h4>
+          <p>橋桁に加速度センサーを設置して、振動の周波数を監視する。経年劣化やヒビで固有振動数が下がるため、その変化から異常を早期に検知できる。</p>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 60 60"><path d="M8 50 V25 Q8 8 30 8 Q52 8 52 25 V50" fill="none" stroke="#1E3A5F" stroke-width="3"/><line x1="8" y1="50" x2="52" y2="50" stroke="#1E3A5F" stroke-width="3"/><line x1="20" y1="50" x2="20" y2="20" stroke="#2C3338" stroke-width="1" stroke-dasharray="2 2"/><circle cx="40" cy="30" r="3" fill="#E88A0A"/><path d="M44 27 Q50 30 44 33" fill="none" stroke="#E88A0A" stroke-width="1.5"/></svg>
+        </div>
+        <div>
+          <h4>🚇 トンネルの打音検査</h4>
+          <p>コンクリート壁面を専用ハンマーで叩き、音を周波数解析する。内部の空洞や剥離があると、健全部とは異なるピークが現れる。</p>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="14" fill="none" stroke="#1E3A5F" stroke-width="3"/><circle cx="30" cy="30" r="5" fill="#E88A0A"/><g stroke="#1E3A5F" stroke-width="3" stroke-linecap="round"><line x1="30" y1="8" x2="30" y2="14"/><line x1="30" y1="46" x2="30" y2="52"/><line x1="8" y1="30" x2="14" y2="30"/><line x1="46" y1="30" x2="52" y2="30"/><line x1="15" y1="15" x2="19" y2="19"/><line x1="41" y1="41" x2="45" y2="45"/><line x1="15" y1="45" x2="19" y2="41"/><line x1="41" y1="19" x2="45" y2="15"/></g></svg>
+        </div>
+        <div>
+          <h4>⚙️ モーター・ベアリングの振動診断</h4>
+          <p>工場のモーターに加速度センサーを常時設置する。軸受けが損傷すると特定の周波数にピークが出る。これにより故障箇所まで特定できる。</p>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 60 60"><line x1="30" y1="30" x2="30" y2="55" stroke="#1E3A5F" stroke-width="3"/><circle cx="30" cy="30" r="4" fill="#1E3A5F"/><path d="M30 30 L20 8 Q24 6 32 26 Z" fill="#3AABA8"/><path d="M30 30 L52 26 Q54 30 32 34 Z" fill="#3AABA8"/><path d="M30 30 L18 50 Q14 48 28 32 Z" fill="#3AABA8"/></svg>
+        </div>
+        <div>
+          <h4>🌬️ 風力発電ブレードの劣化検査</h4>
+          <p>巨大な羽根に微小なヒビが入ると、固有振動数が変化する。これを検知することで、破損して飛散する前に交換できる。</p>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 60 60"><rect x="8" y="14" width="44" height="34" fill="#F5E4C4" stroke="#1E3A5F" stroke-width="3"/><line x1="8" y1="30" x2="52" y2="30" stroke="#2C3338" stroke-width="1.5"/><line x1="20" y1="14" x2="20" y2="30" stroke="#2C3338" stroke-width="1.5"/><line x1="40" y1="14" x2="40" y2="30" stroke="#2C3338" stroke-width="1.5"/><line x1="14" y1="30" x2="14" y2="48" stroke="#2C3338" stroke-width="1.5"/><line x1="30" y1="30" x2="30" y2="48" stroke="#2C3338" stroke-width="1.5"/><line x1="46" y1="30" x2="46" y2="48" stroke="#2C3338" stroke-width="1.5"/><circle cx="36" cy="22" r="2.5" fill="#E88A0A"/></svg>
+        </div>
+        <div>
+          <h4>🏗️ コンクリート構造物の品質検査</h4>
+          <p>打音や打振から、内部の品質や鉄筋の腐食状態を判定する。建物の耐震診断にも応用されている。</p>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 60 60"><rect x="6" y="20" width="48" height="24" rx="4" fill="#2E8EC4"/><circle cx="16" cy="48" r="5" fill="#1E3A5F"/><circle cx="44" cy="48" r="5" fill="#1E3A5F"/><rect x="12" y="25" width="10" height="10" fill="#FFFFFF" opacity="0.85"/><rect x="26" y="25" width="10" height="10" fill="#FFFFFF" opacity="0.85"/><rect x="40" y="25" width="10" height="10" fill="#FFFFFF" opacity="0.85"/><line x1="2" y1="54" x2="58" y2="54" stroke="#2C3338" stroke-width="2"/></svg>
+        </div>
+        <div>
+          <h4>🚄 鉄道のレール・車輪の検査</h4>
+          <p>走行時の振動を解析し、レールの摩耗や車輪の異常を発見する。脱線につながる前に対処できる。</p>
+        </div>
+      </div>
+
     </div>
   </div>
-</section>
-
-<!-- ================ Section 2 ================ -->
-<section>
-  <h2><span class="num">2</span>なぜフーリエ変換が使えるのか</h2>
-  <div class="why-grid">
-    <div>
-      <p>物の固有振動数は、剛性 k (固さ) と質量 m (重さ) で決まる。式で書くとこうなる。</p>
-      <div class="formula-card">
-        <span class="label">物理式</span>
-        <span class="formula">$f = \dfrac{1}{2\pi} \sqrt{\dfrac{k}{m}}$</span>
-        <span class="legend"><b>k</b>: 剛性 / <b>m</b>: 質量</span>
-      </div>
-      <p>m が大きいほど f は低い。k が大きいほど f は高い。だから大きく重い橋は低い周波数で揺れ、小さく硬いグラスは高い音で鳴る。</p>
-      <p>内部の状態が変わると、k と m がわずかに変化する。ヒビが入れば剛性 k が下がる。空洞や腐食でも同様に値が変わる。結果として、固有振動数も変化する。</p>
-      <p>叩いた振動はフーリエ変換でピーク周波数を取り出せる。同じ対象を異なるタイミングで測り、ピークの位置を比較することで、内部の状態変化を非破壊で推定できる。</p>
-      <p class="note">フーリエ変換は、複数の sin 波が重なった信号から「どの周波数がどれくらい含まれているか」を分離する処理である。</p>
-    </div>
-    <div class="why-art">
-      <!-- 大きさ vs 周波数の対比 SVG -->
-      <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" aria-label="大きさと周波数の関係">
-        <!-- 大きいもの -->
-        <rect x="30"  y="20"  width="100" height="80" rx="8" fill="#3AABA8" opacity="0.85"/>
-        <text x="80"  y="115" text-anchor="middle" fill="#2C3338" font-size="12" font-weight="700">大きい / 重い</text>
-        <path d="M 20 165 Q 50 145 80 165 T 140 165" fill="none" stroke="#E88A0A" stroke-width="3"/>
-        <text x="80"  y="195" text-anchor="middle" fill="#6B7780" font-size="11">低い周波数 ♪</text>
-        <!-- 中くらい -->
-        <rect x="160" y="40"  width="80"  height="60" rx="8" fill="#2E8EC4" opacity="0.85"/>
-        <text x="200" y="115" text-anchor="middle" fill="#2C3338" font-size="12" font-weight="700">中くらい</text>
-        <path d="M 160 165 Q 175 145 190 165 T 220 165 T 250 165" fill="none" stroke="#E88A0A" stroke-width="3"/>
-        <text x="200" y="195" text-anchor="middle" fill="#6B7780" font-size="11">中くらい ♫</text>
-        <!-- 小さい -->
-        <rect x="280" y="55"  width="55"  height="45" rx="6" fill="#E88A0A" opacity="0.85"/>
-        <text x="307" y="115" text-anchor="middle" fill="#2C3338" font-size="12" font-weight="700">小さい / 硬い</text>
-        <path d="M 270 165 q 5 -12 10 0 t 10 0 t 10 0 t 10 0 t 10 0 t 10 0 t 10 0" fill="none" stroke="#E88A0A" stroke-width="3"/>
-        <text x="307" y="195" text-anchor="middle" fill="#6B7780" font-size="11">高い周波数 ♬</text>
-        <!-- 矢印 (大→小) -->
-        <line x1="30" y1="240" x2="370" y2="240" stroke="#2C3338" stroke-width="1.5" marker-end="url(#arr)"/>
-        <text x="200" y="265" text-anchor="middle" fill="#1E3A5F" font-size="12" font-weight="700">サイズが小さく・硬くなるほど周波数は高くなる</text>
-        <defs>
-          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2C3338"/>
-          </marker>
-        </defs>
-      </svg>
-    </div>
-  </div>
-</section>
-
-<!-- ================ Section 3 ================ -->
-<section>
-  <h2><span class="num">3</span>実際にどこで使われているか</h2>
-  <p>非破壊検査は、インフラや工業製品の保守に広く使われている。代表的な事例を 6 つ挙げる。</p>
-
-  <div class="cases-grid">
-
-    <div class="case-card">
-      <div class="icon-wrap" aria-hidden="true">
-        <!-- 橋 -->
-        <svg viewBox="0 0 60 60"><path d="M5 45 L55 45" stroke="#1E3A5F" stroke-width="3" fill="none"/><path d="M5 45 Q15 20 30 20 Q45 20 55 45" stroke="#3AABA8" stroke-width="3" fill="none"/><line x1="15" y1="36" x2="15" y2="45" stroke="#2C3338" stroke-width="1.5"/><line x1="25" y1="26" x2="25" y2="45" stroke="#2C3338" stroke-width="1.5"/><line x1="35" y1="26" x2="35" y2="45" stroke="#2C3338" stroke-width="1.5"/><line x1="45" y1="36" x2="45" y2="45" stroke="#2C3338" stroke-width="1.5"/></svg>
-      </div>
-      <h3><span class="emoji">🌉</span>橋梁の健全性モニタリング</h3>
-      <p>橋桁に加速度センサーを設置し、振動の周波数を監視する。経年劣化やヒビで固有振動数が下がるため、その変化から異常を検知する。</p>
-    </div>
-
-    <div class="case-card">
-      <div class="icon-wrap" aria-hidden="true">
-        <!-- トンネル -->
-        <svg viewBox="0 0 60 60"><path d="M8 50 V25 Q8 8 30 8 Q52 8 52 25 V50" fill="none" stroke="#1E3A5F" stroke-width="3"/><line x1="8" y1="50" x2="52" y2="50" stroke="#1E3A5F" stroke-width="3"/><line x1="20" y1="50" x2="20" y2="20" stroke="#2C3338" stroke-width="1" stroke-dasharray="2 2"/><circle cx="40" cy="30" r="3" fill="#E88A0A"/><path d="M44 27 Q50 30 44 33" fill="none" stroke="#E88A0A" stroke-width="1.5"/></svg>
-      </div>
-      <h3><span class="emoji">🚇</span>トンネルの打音検査</h3>
-      <p>コンクリート壁面を専用ハンマーで叩き、音を周波数解析する。内部の空洞や剥離があると、健全部とは異なるピークが現れる。</p>
-    </div>
-
-    <div class="case-card">
-      <div class="icon-wrap" aria-hidden="true">
-        <!-- モーター/歯車 -->
-        <svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="14" fill="none" stroke="#1E3A5F" stroke-width="3"/><circle cx="30" cy="30" r="5"  fill="#E88A0A"/><g stroke="#1E3A5F" stroke-width="3" stroke-linecap="round"><line x1="30" y1="8"  x2="30" y2="14"/><line x1="30" y1="46" x2="30" y2="52"/><line x1="8"  y1="30" x2="14" y2="30"/><line x1="46" y1="30" x2="52" y2="30"/><line x1="15" y1="15" x2="19" y2="19"/><line x1="41" y1="41" x2="45" y2="45"/><line x1="15" y1="45" x2="19" y2="41"/><line x1="41" y1="19" x2="45" y2="15"/></g></svg>
-      </div>
-      <h3><span class="emoji">⚙️</span>モーター・ベアリングの振動診断</h3>
-      <p>工場のモーターに加速度センサーを常時設置する。軸受けが損傷すると特定の周波数にピークが出るため、故障箇所まで特定できる。</p>
-    </div>
-
-    <div class="case-card">
-      <div class="icon-wrap" aria-hidden="true">
-        <!-- 風力発電ブレード -->
-        <svg viewBox="0 0 60 60"><line x1="30" y1="30" x2="30" y2="55" stroke="#1E3A5F" stroke-width="3"/><circle cx="30" cy="30" r="4" fill="#1E3A5F"/><path d="M30 30 L20 8 Q24 6 32 26 Z" fill="#3AABA8"/><path d="M30 30 L52 26 Q54 30 32 34 Z" fill="#3AABA8"/><path d="M30 30 L18 50 Q14 48 28 32 Z" fill="#3AABA8"/></svg>
-      </div>
-      <h3><span class="emoji">🌬️</span>風力発電ブレードの劣化検査</h3>
-      <p>巨大な羽根に微小なヒビが入ると、固有振動数が変化する。これを検知することで、破損して飛散する前に交換できる。</p>
-    </div>
-
-    <div class="case-card">
-      <div class="icon-wrap" aria-hidden="true">
-        <!-- コンクリートブロック -->
-        <svg viewBox="0 0 60 60"><rect x="8" y="14" width="44" height="34" fill="#F5E4C4" stroke="#1E3A5F" stroke-width="3"/><line x1="8"  y1="30" x2="52" y2="30" stroke="#2C3338" stroke-width="1.5"/><line x1="20" y1="14" x2="20" y2="30" stroke="#2C3338" stroke-width="1.5"/><line x1="40" y1="14" x2="40" y2="30" stroke="#2C3338" stroke-width="1.5"/><line x1="14" y1="30" x2="14" y2="48" stroke="#2C3338" stroke-width="1.5"/><line x1="30" y1="30" x2="30" y2="48" stroke="#2C3338" stroke-width="1.5"/><line x1="46" y1="30" x2="46" y2="48" stroke="#2C3338" stroke-width="1.5"/><circle cx="36" cy="22" r="2.5" fill="#E88A0A"/></svg>
-      </div>
-      <h3><span class="emoji">🏗️</span>コンクリート構造物の品質検査</h3>
-      <p>打音や打振から、内部の品質や鉄筋の腐食状態を判定する。建物の耐震診断にも応用されている。</p>
-    </div>
-
-    <div class="case-card">
-      <div class="icon-wrap" aria-hidden="true">
-        <!-- 鉄道 -->
-        <svg viewBox="0 0 60 60"><rect x="6" y="20" width="48" height="24" rx="4" fill="#2E8EC4"/><circle cx="16" cy="48" r="5" fill="#1E3A5F"/><circle cx="44" cy="48" r="5" fill="#1E3A5F"/><rect x="12" y="25" width="10" height="10" fill="#FFFFFF" opacity="0.85"/><rect x="26" y="25" width="10" height="10" fill="#FFFFFF" opacity="0.85"/><rect x="40" y="25" width="10" height="10" fill="#FFFFFF" opacity="0.85"/><line x1="2" y1="54" x2="58" y2="54" stroke="#2C3338" stroke-width="2"/></svg>
-      </div>
-      <h3><span class="emoji">🚄</span>鉄道のレール・車輪の検査</h3>
-      <p>走行時の振動を解析し、レールの摩耗や車輪の異常を発見する。脱線につながる前に対処できる。</p>
-    </div>
-
-  </div>
-</section>
-
-<!-- ================ Section 4 ================ -->
-<section>
-  <h2><span class="num">4</span>君もチャレンジしてみよう！</h2>
-  <p>フーリエ変換ラボの加速度モードまたは音モードで実際に試す。「<b>⏸ フリーズ</b>」ボタンで叩いた瞬間の波形を固定して観察できる。</p>
-
-  <div class="challenge-list">
-    <div class="challenge">
-      <div class="badge">1</div>
-      <div class="body">
-        <h4>机を場所を変えて叩いてみる</h4>
-        <p>端と中央でピーク周波数は変わるか。場所による振動の違いを確認する。</p>
-      </div>
-    </div>
-    <div class="challenge">
-      <div class="badge">2</div>
-      <div class="body">
-        <h4>空のペットボトルと水入りペットボトルを比べる</h4>
-        <p>中身の違いはピークにどう現れるか。質量 m の変化を式 $f = \dfrac{1}{2\pi}\sqrt{k/m}$ と照らし合わせる。</p>
-      </div>
-    </div>
-    <div class="challenge">
-      <div class="badge">3</div>
-      <div class="body">
-        <h4>長い棒と短い棒を叩き比べる</h4>
-        <p>サイズと周波数の関係は、式 $f = \dfrac{1}{2\pi}\sqrt{k/m}$ と一致するか。実測値と理論を照合する。</p>
-      </div>
-    </div>
-    <div class="challenge">
-      <div class="badge">4</div>
-      <div class="body">
-        <h4>身の回りの物を叩いてみる</h4>
-        <p>机・椅子・コップ・床・壁。それぞれ異なるピークが現れるはず。物ごとの固有振動数の幅を体感する。</p>
-      </div>
-    </div>
-    <div class="challenge">
-      <div class="badge">5</div>
-      <div class="body">
-        <h4>同じ物の状態を変えてみる</h4>
-        <p>紙コップを潰した時と潰さない時で、ピークはどう変わるか。剛性 k の変化が固有振動数に与える影響を観察する。</p>
-      </div>
-    </div>
-  </div>
-</section>
+</div>
 
 <div class="cta">
-  <a class="cta-btn" href="index.html">→ フーリエ変換ラボへ</a>
+  <a class="cta-btn" href="index.html">→ フーリエ変換ラボへ戻る</a>
 </div>
 
 <footer>フーリエ変換ラボ v1.3</footer>
 
 </div>
+
+<script>
+// 折りたたみのトグル (reveal-btn → data-target で指定された要素を開閉)
+document.querySelectorAll('.reveal-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = document.getElementById(btn.dataset.target);
+    if(!target) return;
+    const isHidden = target.hasAttribute('hidden');
+    if(isHidden){
+      target.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.textContent = btn.textContent.replace('▼', '▲').replace('開く', '閉じる').replace('見る', '閉じる');
+    } else {
+      target.setAttribute('hidden', '');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = btn.textContent.replace('▲', '▼').replace('閉じる', btn.dataset.target === 'casesBody' ? '見る' : '開く');
+    }
+  });
+});
+</script>
 </body>
 </html>
