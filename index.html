@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>フーリエ変換ラボ v1.1</title>
+<title>フーリエ変換ラボ v1.2</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
 <style>
 :root{
   --teal:#3AABA8;
@@ -134,20 +136,35 @@ header{
 }
 .hint.hidden{display:none}
 
-/* ===== チャート 3面 (上段2列 + 下段フル幅) ===== */
+/* ===== v1.2: 数式帯 ===== */
+.formula-bar{
+  flex-shrink:0;
+  background:#FAF0DE;
+  border:1px solid rgba(232,138,10,0.18);
+  border-radius:8px;
+  padding:6px 14px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  font-size:13px;color:var(--charcoal);
+  min-height:34px;
+}
+.formula-bar .formula{font-size:15px;color:var(--navy);display:flex;align-items:center}
+.formula-bar .note{font-size:11px;color:var(--muted);font-weight:600}
+
+/* ===== チャート 4面 (2×2 グリッド) ===== */
 .charts-grid{
   flex:1;min-height:0;
   display:grid;
   grid-template-columns:1fr 1fr;
   grid-template-rows:1fr 1fr;
   grid-template-areas:
-    "raw  spec"
-    "recon recon";
+    "raw  recon"
+    "spec compare";
   gap:10px;
 }
 #panelRaw{grid-area:raw}
-#panelSpec{grid-area:spec}
 #panelRecon{grid-area:recon}
+#panelSpec{grid-area:spec}
+#panelCompare{grid-area:compare}
 
 .panel{
   background:var(--card);border:1px solid var(--border);border-radius:12px;
@@ -173,17 +190,37 @@ header{
 .chart-body{flex:1;min-height:0;position:relative}
 .chart-body canvas{width:100% !important;height:100% !important}
 
+/* ===== v1.2: ③ sin波 (縦3段 + 式表示) ===== */
+.sin-stack{flex:1;min-height:0;display:grid;grid-template-rows:1fr 1fr 1fr;gap:6px}
+.sin-row{display:flex;flex-direction:column;min-height:0;gap:1px}
+.sin-row .sin-formula{
+  font-size:11px;color:var(--charcoal);font-weight:600;line-height:1.2;
+  padding:1px 4px 0;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sin-row.k1 .sin-formula{color:var(--orange-dark)}
+.sin-row.k2 .sin-formula{color:#1f6fa3}
+.sin-row.k3 .sin-formula{color:var(--teal-dark)}
+.mini-chart{flex:1;min-height:0;position:relative}
+.mini-chart canvas{width:100% !important;height:100% !important}
+
+/* ===== v1.2: ④ 合成波 vs 元波形 ===== */
+.compare-legend{
+  font-size:10px;color:var(--muted);text-align:right;
+  padding:0 4px;font-weight:600;
+}
+
 /* ===== レスポンシブ ===== */
-/* タブレット: 上段を縦積み (波形 → スペクトル → 分解sin波) ただし 1画面に収める */
-@media (max-width:1023px){
+/* タブレット: 1 列縦積み (①→②→③→④) */
+@media (max-width:1279px){
   .charts-grid{
     grid-template-columns:1fr;
-    grid-template-rows:1fr 1fr 1.1fr;
-    grid-template-areas:"raw" "spec" "recon";
+    grid-template-rows:1fr 1fr 1.2fr 1fr;
+    grid-template-areas:"raw" "spec" "recon" "compare";
   }
   .sensor-row{flex:none;justify-content:flex-start}
 }
-/* スマホ: viewport 高さ縛りを解除して縦スクロール許可 (v1.0 と同じ) */
+/* スマホ: viewport 高さ縛り解除して縦スクロール許可 */
 @media (max-width:767px){
   body{overflow:auto}
   .app{height:auto;min-height:100vh;padding:10px 10px 30px;gap:8px}
@@ -192,9 +229,11 @@ header{
   .title .sub{display:none}
   .sensor-row{order:3;width:100%;flex-wrap:wrap}
   .version{margin-left:0}
+  .formula-bar{font-size:12px}
+  .formula-bar .formula{font-size:13px}
   .charts-grid{
     flex:none;
-    grid-template-rows:240px 240px 280px;
+    grid-template-rows:220px 220px 320px 240px;
   }
   .pill{padding:5px 11px;font-size:11px}
   .conn-bar{padding:8px 12px}
@@ -214,8 +253,13 @@ header{
     <button class="pill" data-sensor="light">💡 明るさ</button>
     <button class="pill" data-sensor="magnet">🧲 磁気</button>
   </div>
-  <div class="version">v1.1</div>
+  <div class="version">v1.2</div>
 </header>
+
+<div class="formula-bar">
+  <div class="formula" id="formulaTop"></div>
+  <div class="note">← 虚数(複素数)を使った変換式</div>
+</div>
 
 <div class="conn-bar">
   <button class="btn btn-primary" id="connectBtn">🔌 USB接続</button>
@@ -241,6 +285,26 @@ header{
     <div class="chart-body"><canvas id="rawChart"></canvas></div>
   </div>
 
+  <div class="panel" id="panelRecon">
+    <div class="panel-head">
+      <div class="panel-title"><span class="num">3</span>分解 sin 波<span class="panel-sub">上位 3 本を縦に個別表示</span></div>
+    </div>
+    <div class="sin-stack">
+      <div class="sin-row k1">
+        <div class="sin-formula" id="sinFormula1">sin1: y = -- sin(2π · -- t + --)</div>
+        <div class="mini-chart"><canvas id="sin1Chart"></canvas></div>
+      </div>
+      <div class="sin-row k2">
+        <div class="sin-formula" id="sinFormula2">sin2: y = -- sin(2π · -- t + --)</div>
+        <div class="mini-chart"><canvas id="sin2Chart"></canvas></div>
+      </div>
+      <div class="sin-row k3">
+        <div class="sin-formula" id="sinFormula3">sin3: y = -- sin(2π · -- t + --)</div>
+        <div class="mini-chart"><canvas id="sin3Chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
   <div class="panel" id="panelSpec">
     <div class="panel-head">
       <div class="panel-title"><span class="num">2</span>スペクトル<span class="panel-sub">FFT 結果・最大ピークをハイライト</span></div>
@@ -248,11 +312,11 @@ header{
     <div class="chart-body"><canvas id="specChart"></canvas></div>
   </div>
 
-  <div class="panel" id="panelRecon">
+  <div class="panel" id="panelCompare">
     <div class="panel-head">
-      <div class="panel-title"><span class="num">3</span>分解 sin 波<span class="panel-sub">上位 3 本 + 合成波 (破線)</span></div>
+      <div class="panel-title"><span class="num">4</span>合成波 と 元波形 の比較<span class="panel-sub">合成 = sin1 + sin2 + sin3</span></div>
     </div>
-    <div class="chart-body"><canvas id="reconChart"></canvas></div>
+    <div class="chart-body"><canvas id="compareChart"></canvas></div>
   </div>
 </div>
 
@@ -335,13 +399,40 @@ const specChart = new Chart($('specChart'), {
   }
 });
 
-const reconChart = new Chart($('reconChart'), {
+// v1.2: sin 1 / sin 2 / sin 3 を縦 3 段で個別表示するミニチャート
+function makeSinChart(canvasId, color){
+  return new Chart($(canvasId), {
+    type:'line',
+    data:{ datasets:[{
+      data:[], borderColor:color, borderWidth:2,
+      pointRadius:0, tension:0.0, fill:false
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      parsing:false, normalized:true,
+      plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+      scales:{
+        x:{ type:'linear', min:0, max:WINDOW_SEC, display:false },
+        y:{ display:false }
+      },
+      layout:{ padding:{left:2,right:2,top:2,bottom:2} }
+    }
+  });
+}
+const sinCharts = [
+  makeSinChart('sin1Chart', COLORS.orange),
+  makeSinChart('sin2Chart', COLORS.blue),
+  makeSinChart('sin3Chart', COLORS.teal)
+];
+const sinColors = [COLORS.orange, COLORS.blue, COLORS.teal];
+
+// v1.2: ④ 合成波 (破線) と 元波形 (実線) の比較
+const compareChart = new Chart($('compareChart'), {
   type:'line',
   data:{ datasets:[
-    { label:'sin 1', data:[], borderColor:COLORS.orange, borderWidth:2, pointRadius:0, tension:0.0, fill:false },
-    { label:'sin 2', data:[], borderColor:COLORS.blue,   borderWidth:2, pointRadius:0, tension:0.0, fill:false },
-    { label:'sin 3', data:[], borderColor:COLORS.teal,   borderWidth:2, pointRadius:0, tension:0.0, fill:false },
-    { label:'合成 (sin 1+2+3)', data:[], borderColor:COLORS.charcoal,
+    { label:'元波形', data:[], borderColor:COLORS.teal, borderWidth:2,
+      pointRadius:0, tension:0.0, fill:false },
+    { label:'合成 = sin1 + sin2 + sin3', data:[], borderColor:COLORS.charcoal,
       borderWidth:2.5, borderDash:[6,5], pointRadius:0, tension:0.0, fill:false }
   ]},
   options:{
@@ -551,11 +642,12 @@ function refreshCharts(){
   specChart.data.datasets[0].borderColor = bd;
   specChart.update('none');
 
-  // --- ③ 分解 sin 波 + 合成 ---
+  // --- ③ 分解 sin 波 (縦 3 段で個別表示) ---
+  // v1.2: 各 sin を専用ミニチャートに描画し、自分の振幅で自動スケーリング。
+  //        同時に sin1/2/3 の式 (y = A sin(2π·f t + φ)) をリアルタイム表示。
   const M = 400; // プロット解像度
-  const sinColors = [COLORS.orange, COLORS.blue, COLORS.teal];
-  const sinDatasets = [[], [], []];
-  const combined = [];
+  const sinSeries = [[], [], []]; // y(t) 配列 × 3
+  const combined = new Array(M);
   for(let i = 0; i < M; i++){
     const t = i * WINDOW_SEC / (M - 1);
     let sumY = 0;
@@ -566,27 +658,49 @@ function refreshCharts(){
         y = peak.A * Math.cos(2*Math.PI*peak.f*t + peak.phi);
         sumY += y;
       }
-      sinDatasets[p].push({ x: t, y });
+      sinSeries[p].push({ x: t, y });
     }
-    combined.push({ x: t, y: sumY });
+    combined[i] = { x: t, y: sumY };
   }
   for(let p = 0; p < SIN_COUNT; p++){
-    reconChart.data.datasets[p].data = sinDatasets[p];
-    reconChart.data.datasets[p].borderColor = sinColors[p];
+    const ch = sinCharts[p];
     const peak = peaks[p];
-    reconChart.data.datasets[p].label = peak
-      ? `sin${p+1} (${peak.f.toFixed(1)} Hz)`
-      : `sin${p+1}`;
+    ch.data.datasets[0].data = sinSeries[p];
+    // Y 軸はその sin 波だけの振幅で対称スケーリング (小さい振幅でも見える)
+    const A = peak ? peak.A : 0;
+    const margin = Math.max(1e-3, A * 1.15);
+    ch.options.scales.y.min = -margin;
+    ch.options.scales.y.max =  margin;
+    ch.update('none');
+    // 式の更新
+    const el = $('sinFormula' + (p + 1));
+    if(peak){
+      // cos(α) = sin(α + π/2) の関係で sin 表記に変換 (phase + π/2)
+      let phi = peak.phi + Math.PI / 2;
+      // [-π, π] に正規化
+      while(phi > Math.PI)  phi -= 2 * Math.PI;
+      while(phi < -Math.PI) phi += 2 * Math.PI;
+      const sign = phi >= 0 ? '+' : '−';
+      el.textContent = `sin${p+1}: y = ${A.toFixed(1)} sin(2π · ${peak.f.toFixed(1)} t ${sign} ${Math.abs(phi).toFixed(2)})`;
+    } else {
+      el.textContent = `sin${p+1}: y = 0  (検出なし)`;
+    }
   }
-  reconChart.data.datasets[3].data = combined;
-  // Y 軸: 中心化済 raw と合成の両方が収まるように
+
+  // --- ④ 合成波 vs 元波形 ---
+  const rawCentered = new Array(N);
+  for(let i = 0; i < N; i++){
+    rawCentered[i] = { x: i * WINDOW_SEC / (N - 1), y: centered[i] };
+  }
+  compareChart.data.datasets[0].data = rawCentered;
+  compareChart.data.datasets[1].data = combined;
   let ymin = Infinity, ymax = -Infinity;
   for(let i = 0; i < N; i++){ if(centered[i] < ymin) ymin = centered[i]; if(centered[i] > ymax) ymax = centered[i]; }
   for(const p of combined){ if(p.y < ymin) ymin = p.y; if(p.y > ymax) ymax = p.y; }
   const padR = Math.max(1e-3, (ymax - ymin) * 0.12);
-  reconChart.options.scales.y.min = ymin - padR;
-  reconChart.options.scales.y.max = ymax + padR;
-  reconChart.update('none');
+  compareChart.options.scales.y.min = ymin - padR;
+  compareChart.options.scales.y.max = ymax + padR;
+  compareChart.update('none');
 }
 
 // =============== ループ ===============
@@ -688,7 +802,29 @@ document.querySelectorAll('.pill').forEach(btn => {
 
 // =============== Init ===============
 $('rawUnit').textContent = SENSORS[currentSensor].label;
-requestAnimationFrame(()=>{ try{ rawChart.resize(); specChart.resize(); reconChart.resize(); }catch(e){} });
+
+// v1.2: KaTeX で画面上部の変換式をレンダリング (一度だけ)。
+// KaTeX は defer 読み込みなので、利用可能になったタイミングで描画する。
+function renderTopFormula(){
+  const el = $('formulaTop');
+  if(!el) return;
+  const tex = String.raw`F(\omega) = \int_{-\infty}^{\infty} f(t)\, e^{-i\omega t}\, dt`;
+  if(window.katex){
+    try { katex.render(tex, el, { throwOnError:false, displayMode:false }); return; } catch(e){}
+  }
+  // フォールバック (KaTeX 読み込み失敗時)
+  el.textContent = 'F(ω) = ∫ f(t) e^(-iωt) dt';
+}
+if(window.katex){ renderTopFormula(); }
+else { window.addEventListener('load', renderTopFormula); }
+
+requestAnimationFrame(()=>{
+  try{
+    rawChart.resize(); specChart.resize();
+    sinCharts.forEach(c => c.resize());
+    compareChart.resize();
+  }catch(e){}
+});
 tick();
 </script>
 </body>
