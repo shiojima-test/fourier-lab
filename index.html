@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌊 SchooMy フーリエ変換ラボ v1.0</title>
+<title>フーリエ変換ラボ v1.1</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -24,201 +24,237 @@
   --shadow-lg:0 12px 32px rgba(44,51,56,0.10);
 }
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
 body{
   font-family:"Meiryo","メイリオ",sans-serif;
   background:linear-gradient(180deg,var(--bg) 0%,var(--cream-light) 100%);
   color:var(--charcoal);
-  min-height:100vh;
-  padding:20px 16px 40px;
+  overflow:hidden;
 }
-.container{max-width:1080px;margin:0 auto}
+.app{
+  height:100vh;
+  display:flex;flex-direction:column;
+  padding:10px 16px 12px;
+  gap:10px;
+  max-width:1920px;margin:0 auto;
+}
 
+/* ===== ヘッダー帯 (タイトル + センサー選択 + バージョン) ===== */
 header{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding-bottom:18px;border-bottom:2px solid var(--border);margin-bottom:20px;
+  flex-shrink:0;
+  display:flex;align-items:center;gap:14px;
+  padding-bottom:8px;border-bottom:1.5px solid var(--border);
 }
 .title{
-  font-size:24px;font-weight:900;color:var(--navy);
-  display:flex;align-items:center;gap:10px;letter-spacing:.01em;
+  font-size:20px;font-weight:900;color:var(--navy);
+  display:flex;align-items:baseline;gap:10px;letter-spacing:.01em;
+  white-space:nowrap;
 }
-.title .ico{font-size:28px}
-.title .sub{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
+.title .sub{font-size:11px;color:var(--muted);font-weight:600}
 .version{
   background:var(--cream);color:var(--orange-dark);
-  padding:5px 12px;border-radius:14px;
-  font-size:12px;font-weight:800;letter-spacing:.04em;
+  padding:4px 11px;border-radius:12px;
+  font-size:11px;font-weight:800;letter-spacing:.04em;
   border:1px solid rgba(232,138,10,0.3);
+  margin-left:auto;
 }
-
-.sensor-row{
-  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;
-}
+.sensor-row{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
 .pill{
   font-family:inherit;cursor:pointer;
   background:#fff;border:1.5px solid var(--border);
-  color:var(--charcoal);font-weight:700;font-size:13px;
-  padding:9px 18px;border-radius:24px;
+  color:var(--charcoal);font-weight:700;font-size:12px;
+  padding:6px 14px;border-radius:20px;
   transition:all .15s;
-  display:flex;align-items:center;gap:6px;
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
 }
 .pill:hover{border-color:var(--teal);color:var(--teal)}
 .pill.active{
   background:linear-gradient(135deg,var(--teal),var(--teal-dark));
   color:#fff;border-color:var(--teal-dark);
-  box-shadow:0 3px 10px rgba(58,171,168,0.30);
+  box-shadow:0 2px 8px rgba(58,171,168,0.30);
 }
 
+/* ===== 操作帯 (USB接続 + ステータス + fs + ピーク表示) ===== */
 .conn-bar{
-  display:flex;flex-wrap:wrap;align-items:center;gap:12px;
-  background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:14px 18px;margin-bottom:18px;box-shadow:var(--shadow);
+  flex-shrink:0;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:8px 14px;box-shadow:var(--shadow);
 }
 .btn{
   font-family:inherit;cursor:pointer;border:none;outline:none;
-  padding:10px 20px;border-radius:10px;font-weight:800;font-size:14px;
-  transition:all .15s;
+  padding:7px 16px;border-radius:8px;font-weight:800;font-size:13px;
+  transition:all .15s;white-space:nowrap;
 }
 .btn-primary{
   background:linear-gradient(135deg,var(--orange),var(--orange-dark));
-  color:#fff;box-shadow:0 2px 8px rgba(232,138,10,0.30);
+  color:#fff;box-shadow:0 2px 6px rgba(232,138,10,0.30);
 }
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(232,138,10,0.40)}
-.btn-secondary{
-  background:#fff;color:var(--charcoal);border:1px solid var(--border);
-}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(232,138,10,0.40)}
+.btn-secondary{background:#fff;color:var(--charcoal);border:1px solid var(--border)}
 .btn-secondary:hover{border-color:var(--orange);color:var(--orange)}
+.btn-ghost{
+  font-family:inherit;cursor:pointer;background:transparent;border:none;
+  color:var(--muted);font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;
+  margin-left:auto;
+}
+.btn-ghost:hover{color:var(--blue);background:rgba(46,142,196,0.08)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
 .conn-status{
   display:flex;align-items:center;gap:6px;
-  font-size:13px;color:var(--muted);font-weight:700;
+  font-size:12px;color:var(--muted);font-weight:700;
 }
-.conn-status .dot{width:9px;height:9px;border-radius:50%;background:#bbb}
+.conn-status .dot{width:8px;height:8px;border-radius:50%;background:#bbb}
 .conn-status.connected .dot{background:var(--teal);box-shadow:0 0 0 3px rgba(58,171,168,0.22)}
 .conn-status.connected{color:var(--teal)}
 
 .fs-info{
-  font-size:12px;color:var(--muted);
-  background:var(--cream-light);padding:4px 12px;border-radius:8px;
+  font-size:11px;color:var(--muted);
+  background:var(--cream-light);padding:3px 10px;border-radius:6px;
   font-variant-numeric:tabular-nums;letter-spacing:.02em;
-  border:1px solid rgba(232,138,10,0.15);
+  border:1px solid rgba(232,138,10,0.15);white-space:nowrap;
 }
 
+.peak-inline{
+  display:flex;align-items:baseline;gap:10px;
+  font-size:13px;color:var(--charcoal);
+  background:var(--cream);padding:5px 14px;border-radius:8px;
+  border:1px solid rgba(232,138,10,0.25);
+  font-variant-numeric:tabular-nums;
+}
+.peak-inline .star{color:var(--orange);font-size:14px;font-weight:900}
+.peak-inline b{font-weight:900;color:var(--charcoal);font-size:15px;margin:0 2px}
+.peak-inline .others{color:var(--muted);font-size:11px}
+
+.hint{
+  flex-shrink:0;
+  background:var(--cream-light);border-left:4px solid var(--blue);
+  padding:7px 12px;border-radius:6px;font-size:11px;color:var(--charcoal);
+}
+.hint.hidden{display:none}
+
+/* ===== チャート 3面 (上段2列 + 下段フル幅) ===== */
+.charts-grid{
+  flex:1;min-height:0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  grid-template-areas:
+    "raw  spec"
+    "recon recon";
+  gap:10px;
+}
+#panelRaw{grid-area:raw}
+#panelSpec{grid-area:spec}
+#panelRecon{grid-area:recon}
+
 .panel{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:16px 18px 18px;margin-bottom:14px;box-shadow:var(--shadow);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:8px 14px 10px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;min-height:0;
 }
 .panel-head{
   display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-  margin-bottom:10px;
+  margin-bottom:4px;flex-shrink:0;
 }
 .panel-title{
-  font-size:14px;font-weight:900;color:var(--navy);
+  font-size:13px;font-weight:900;color:var(--navy);
   display:flex;align-items:center;gap:8px;
 }
 .panel-title .num{
   display:inline-flex;align-items:center;justify-content:center;
-  width:22px;height:22px;border-radius:50%;
-  background:var(--navy);color:#fff;font-size:12px;font-weight:900;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:11px;font-weight:900;
 }
-.panel-sub{font-size:11px;color:var(--muted)}
+.panel-title .panel-sub{margin-left:4px;font-weight:600}
+.panel-sub{font-size:10px;color:var(--muted)}
 
-.chart-body{height:200px;position:relative}
+.chart-body{flex:1;min-height:0;position:relative}
 .chart-body canvas{width:100% !important;height:100% !important}
-.panel.tall .chart-body{height:240px}
 
-.peak-info{
-  background:var(--cream);border-radius:12px;padding:14px 18px;
-  margin-bottom:8px;
-  border:1px solid rgba(232,138,10,0.25);
-  font-size:14px;color:var(--charcoal);
-  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;
+/* ===== レスポンシブ ===== */
+/* タブレット: 上段を縦積み (波形 → スペクトル → 分解sin波) ただし 1画面に収める */
+@media (max-width:1023px){
+  .charts-grid{
+    grid-template-columns:1fr;
+    grid-template-rows:1fr 1fr 1.1fr;
+    grid-template-areas:"raw" "spec" "recon";
+  }
+  .sensor-row{flex:none;justify-content:flex-start}
 }
-.peak-info .star{color:var(--orange);font-size:18px;font-weight:900}
-.peak-info .main{font-weight:900;color:var(--charcoal);font-size:18px}
-.peak-info .others{color:var(--muted);font-size:13px}
-.peak-info b{font-variant-numeric:tabular-nums}
-
-.empty{
-  text-align:center;padding:30px;color:var(--muted);font-size:13px;
-}
-.hint{
-  background:var(--cream-light);border-left:4px solid var(--blue);
-  padding:10px 14px;border-radius:6px;font-size:12px;color:var(--charcoal);
-  margin-bottom:14px;
-}
-footer{
-  text-align:center;font-size:11px;color:var(--muted);
-  margin-top:24px;padding-top:14px;border-top:1px solid var(--border);
-}
-
-@media (max-width:600px){
-  body{padding:14px 10px 30px}
-  .title{font-size:18px}
-  .title .ico{font-size:22px}
+/* スマホ: viewport 高さ縛りを解除して縦スクロール許可 (v1.0 と同じ) */
+@media (max-width:767px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100vh;padding:10px 10px 30px;gap:8px}
+  header{flex-wrap:wrap;gap:8px}
+  .title{font-size:17px}
   .title .sub{display:none}
-  .chart-body{height:160px}
-  .panel.tall .chart-body{height:200px}
-  .pill{padding:7px 14px;font-size:12px}
+  .sensor-row{order:3;width:100%;flex-wrap:wrap}
+  .version{margin-left:0}
+  .charts-grid{
+    flex:none;
+    grid-template-rows:240px 240px 280px;
+  }
+  .pill{padding:5px 11px;font-size:11px}
+  .conn-bar{padding:8px 12px}
+  .peak-inline{font-size:12px;padding:4px 10px}
+  .btn{padding:7px 14px;font-size:12px}
 }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="app">
 
 <header>
-  <div class="title">
-    <span class="ico">🌊</span><span>SchooMy フーリエ変換ラボ</span>
-    <span class="sub">波形 × スペクトル × 分解sin波</span>
+  <div class="title">フーリエ変換ラボ<span class="sub">波形 × スペクトル × 分解sin波</span></div>
+  <div class="sensor-row" id="sensorPills">
+    <button class="pill active" data-sensor="sound">🔊 音</button>
+    <button class="pill" data-sensor="accel">📈 加速度</button>
+    <button class="pill" data-sensor="light">💡 明るさ</button>
+    <button class="pill" data-sensor="magnet">🧲 磁気</button>
   </div>
-  <div class="version">v1.0</div>
+  <div class="version">v1.1</div>
 </header>
-
-<div class="sensor-row" id="sensorPills">
-  <button class="pill active" data-sensor="sound">🔊 音</button>
-  <button class="pill" data-sensor="accel">📈 加速度</button>
-  <button class="pill" data-sensor="light">💡 明るさ</button>
-  <button class="pill" data-sensor="magnet">🧲 磁気</button>
-</div>
 
 <div class="conn-bar">
   <button class="btn btn-primary" id="connectBtn">🔌 USB接続</button>
   <button class="btn btn-secondary" id="disconnectBtn" style="display:none">切断</button>
   <div class="conn-status" id="connStatus"><div class="dot"></div><span>未接続</span></div>
   <div class="fs-info" id="fsInfo">fs ≒ -- Hz</div>
-</div>
-
-<div class="hint">📚 オレンジボードに対応スケッチを書き込み、PC と USB 接続してから「USB接続」を押してください。ブラウザは Chrome / Edge をお使いください。</div>
-
-<div class="peak-info" id="peakInfo">
-  <span class="star">★</span>
-  <span>ピーク周波数: <span class="main" id="peakMain">--</span></span>
-  <span class="others">他: <span id="peakOthers">--</span></span>
-</div>
-
-<div class="panel">
-  <div class="panel-head">
-    <div class="panel-title"><span class="num">1</span>元の波形 <span class="panel-sub">直近 2 秒</span></div>
-    <div class="panel-sub" id="rawUnit">音 (生値)</div>
+  <div class="peak-inline" id="peakInfo">
+    <span class="star">★</span>
+    <span>ピーク <b id="peakMain">--</b></span>
+    <span class="others">他: <span id="peakOthers">--</span></span>
   </div>
-  <div class="chart-body"><canvas id="rawChart"></canvas></div>
+  <button class="btn-ghost" id="hintToggle" type="button" aria-label="使い方">？ 使い方</button>
 </div>
 
-<div class="panel">
-  <div class="panel-head">
-    <div class="panel-title"><span class="num">2</span>スペクトル <span class="panel-sub">FFT 結果・最大ピークをハイライト</span></div>
+<div class="hint" id="hint">📚 オレンジボードに対応スケッチを書き込み、PC と USB 接続してから「USB接続」を押してください。ブラウザは Chrome / Edge をお使いください。</div>
+
+<div class="charts-grid">
+  <div class="panel" id="panelRaw">
+    <div class="panel-head">
+      <div class="panel-title"><span class="num">1</span>元の波形<span class="panel-sub">直近 2 秒</span></div>
+      <div class="panel-sub" id="rawUnit">音 (生値)</div>
+    </div>
+    <div class="chart-body"><canvas id="rawChart"></canvas></div>
   </div>
-  <div class="chart-body"><canvas id="specChart"></canvas></div>
-</div>
 
-<div class="panel tall">
-  <div class="panel-head">
-    <div class="panel-title"><span class="num">3</span>分解 sin 波 <span class="panel-sub">上位 3 本 + 合成波 (破線)</span></div>
+  <div class="panel" id="panelSpec">
+    <div class="panel-head">
+      <div class="panel-title"><span class="num">2</span>スペクトル<span class="panel-sub">FFT 結果・最大ピークをハイライト</span></div>
+    </div>
+    <div class="chart-body"><canvas id="specChart"></canvas></div>
   </div>
-  <div class="chart-body"><canvas id="reconChart"></canvas></div>
-</div>
 
-<footer>SchooMy フーリエ変換ラボ v1.0 — © スクーミー株式会社</footer>
+  <div class="panel" id="panelRecon">
+    <div class="panel-head">
+      <div class="panel-title"><span class="num">3</span>分解 sin 波<span class="panel-sub">上位 3 本 + 合成波 (破線)</span></div>
+    </div>
+    <div class="chart-body"><canvas id="reconChart"></canvas></div>
+  </div>
+</div>
 
 </div>
 
@@ -579,6 +615,8 @@ async function connect(){
     $('disconnectBtn').style.display = '';
     $('connStatus').classList.add('connected');
     $('connStatus').querySelector('span').textContent = '接続中 (9600 bps)';
+    // v1.1: 接続成功でガイドを非表示
+    $('hint').classList.add('hidden');
     readLoop();
   } catch(e){
     console.error(e);
@@ -596,6 +634,8 @@ async function disconnect(){
   $('connStatus').classList.remove('connected');
   $('connStatus').querySelector('span').textContent = '未接続';
   $('fsInfo').textContent = 'fs ≒ -- Hz';
+  // v1.1: 切断したらガイドを再表示
+  $('hint').classList.remove('hidden');
 }
 
 async function readLoop(){
@@ -632,6 +672,10 @@ function pushSample(v){
 // =============== Events ===============
 $('connectBtn').addEventListener('click', connect);
 $('disconnectBtn').addEventListener('click', disconnect);
+// v1.1: 使い方ガイドの開閉
+$('hintToggle').addEventListener('click', ()=>{
+  $('hint').classList.toggle('hidden');
+});
 
 document.querySelectorAll('.pill').forEach(btn => {
   btn.addEventListener('click', () => {
