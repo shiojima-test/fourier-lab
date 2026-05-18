@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>フーリエ変換ラボ v1.2</title>
+<title>フーリエ変換ラボ v1.3</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
@@ -102,6 +102,40 @@ header{
 }
 .btn-ghost:hover{color:var(--blue);background:rgba(46,142,196,0.08)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* v1.3: フリーズ */
+.btn-freeze{
+  background:linear-gradient(135deg,var(--orange),var(--orange-dark));
+  color:#fff;box-shadow:0 2px 6px rgba(232,138,10,0.30);
+}
+.btn-freeze:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 3px 10px rgba(232,138,10,0.40)}
+.btn-frozen{
+  background:linear-gradient(135deg,var(--charcoal),#1c2126);
+  color:#fff;box-shadow:0 2px 6px rgba(44,51,56,0.30);
+}
+.btn-frozen:hover{transform:translateY(-1px)}
+.freeze-indicator{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--cream);color:var(--orange-dark);
+  font-size:12px;font-weight:800;letter-spacing:.04em;
+  padding:5px 11px;border-radius:14px;
+  border:1px solid rgba(232,138,10,0.35);
+  animation:pulse-freeze 1.4s ease-in-out infinite;
+}
+@keyframes pulse-freeze{0%,100%{opacity:1}50%{opacity:0.55}}
+body.is-frozen .conn-bar{background:linear-gradient(180deg,#fff,var(--cream-light))}
+
+/* v1.3: 非破壊検査ページへの導線リンク */
+.learn-link{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--navy);color:#fff;
+  padding:5px 12px;border-radius:14px;
+  font-size:11px;font-weight:800;letter-spacing:.02em;
+  text-decoration:none;
+  transition:background .15s, transform .1s;
+  white-space:nowrap;
+}
+.learn-link:hover{background:#2a4d7a;transform:translateY(-1px)}
 
 .conn-status{
   display:flex;align-items:center;gap:6px;
@@ -253,7 +287,8 @@ header{
     <button class="pill" data-sensor="light">💡 明るさ</button>
     <button class="pill" data-sensor="magnet">🧲 磁気</button>
   </div>
-  <div class="version">v1.2</div>
+  <a class="learn-link" href="nondestructive.html">🔬 非破壊検査について学ぶ →</a>
+  <div class="version">v1.3</div>
 </header>
 
 <div class="formula-bar">
@@ -271,6 +306,8 @@ header{
     <span>ピーク <b id="peakMain">--</b></span>
     <span class="others">他: <span id="peakOthers">--</span></span>
   </div>
+  <button class="btn btn-freeze" id="freezeBtn" type="button" disabled>⏸ フリーズ</button>
+  <span class="freeze-indicator" id="freezeIndicator" style="display:none">⏸ フリーズ中</span>
   <button class="btn-ghost" id="hintToggle" type="button" aria-label="使い方">？ 使い方</button>
 </div>
 
@@ -344,6 +381,7 @@ let currentSensor = 'sound';
 let port = null;
 let reader = null;
 let connected = false;
+let isFrozen = false;     // v1.3: フリーズ中フラグ
 let ring = [];                 // [{value, t}]  t は performance.now() ms
 let lastAnalyzeAt = 0;
 
@@ -707,10 +745,35 @@ function refreshCharts(){
 function tick(){
   const now = performance.now();
   if(now - lastAnalyzeAt >= ANALYZE_MS){
-    refreshCharts();
+    // v1.3: フリーズ中はチャート/式/ピーク表示の更新を停止 (データ受信は継続)
+    if(!isFrozen) refreshCharts();
     lastAnalyzeAt = now;
   }
   requestAnimationFrame(tick);
+}
+
+// v1.3: フリーズ操作
+function setFreeze(on){
+  isFrozen = !!on;
+  const btn = $('freezeBtn');
+  const ind = $('freezeIndicator');
+  document.body.classList.toggle('is-frozen', isFrozen);
+  if(isFrozen){
+    btn.textContent = '▶ 解除';
+    btn.classList.remove('btn-freeze');
+    btn.classList.add('btn-frozen');
+    ind.style.display = '';
+  } else {
+    btn.textContent = '⏸ フリーズ';
+    btn.classList.remove('btn-frozen');
+    btn.classList.add('btn-freeze');
+    ind.style.display = 'none';
+  }
+}
+function updateFreezeAvailability(){
+  // 未接続のときはフリーズボタンを無効化し、フリーズ状態も解除
+  $('freezeBtn').disabled = !connected;
+  if(!connected && isFrozen) setFreeze(false);
 }
 
 // =============== Web Serial ===============
@@ -731,6 +794,9 @@ async function connect(){
     $('connStatus').querySelector('span').textContent = '接続中 (9600 bps)';
     // v1.1: 接続成功でガイドを非表示
     $('hint').classList.add('hidden');
+    // v1.3: フリーズボタンを有効化 (フリーズ状態自体は引き継がない)
+    setFreeze(false);
+    updateFreezeAvailability();
     readLoop();
   } catch(e){
     console.error(e);
@@ -750,6 +816,8 @@ async function disconnect(){
   $('fsInfo').textContent = 'fs ≒ -- Hz';
   // v1.1: 切断したらガイドを再表示
   $('hint').classList.remove('hidden');
+  // v1.3: フリーズボタンを無効化、フリーズ状態を解除
+  updateFreezeAvailability();
 }
 
 async function readLoop(){
@@ -789,6 +857,11 @@ $('disconnectBtn').addEventListener('click', disconnect);
 // v1.1: 使い方ガイドの開閉
 $('hintToggle').addEventListener('click', ()=>{
   $('hint').classList.toggle('hidden');
+});
+// v1.3: フリーズボタン
+$('freezeBtn').addEventListener('click', ()=>{
+  if(!connected) return;
+  setFreeze(!isFrozen);
 });
 
 document.querySelectorAll('.pill').forEach(btn => {
