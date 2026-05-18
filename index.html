@@ -383,7 +383,7 @@ body.no-guide .guide-card{display:none}
   </div>
   <button class="btn btn-freeze" id="freezeBtn" type="button" disabled>⏸ フリーズ</button>
   <span class="freeze-indicator" id="freezeIndicator" style="display:none">⏸ フリーズ中</span>
-  <button class="btn-guide-toggle active" id="guideToggle" type="button">💡 ガイドを隠す</button>
+  <button class="btn-guide-toggle" id="guideToggle" type="button">💡 ガイドを表示</button>
   <button class="btn-ghost" id="hintToggle" type="button" aria-label="使い方">？ 使い方</button>
 </div>
 
@@ -460,6 +460,13 @@ body.no-guide .guide-card{display:none}
       <div class="panel-title"><span class="num">4</span>合成波 と 元波形 の比較<span class="panel-sub">合成 = sin1 + sin2 + sin3</span></div>
     </div>
     <div class="chart-body"><canvas id="compareChart"></canvas></div>
+    <div class="guide-card" data-guide="compare">
+      <div class="gc-title">合成波と元波形の比較</div>
+      <div class="gc-body">
+        <p>分解した 3 本の sin 波を足し合わせた合成波 (破線) と、元の波形を重ねて表示しています。</p>
+        <p><span class="gc-use">何に使う?</span> 2 つの波が一致していれば、フーリエ変換でちゃんと元の波を再現できたことが確認できます。実測と理論が一致する瞬間を見届けるグラフです。</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -491,7 +498,7 @@ let isFrozen = false;     // v1.3: フリーズ中フラグ
 let isDemoMode = false;   // v1.4: デモモード中フラグ
 let demoInterval = null;  // v1.4: デモ生成器の setInterval id
 let demoStartedAt = 0;    // v1.4: デモ開始時刻 (performance.now)
-let guideVisible = true;  // v1.4: ガイドカードの表示状態 (初期 true)
+let guideVisible = false; // v1.4: ガイドカードの表示状態 (初期は非表示)
 let ring = [];                 // [{value, t}]  t は performance.now() ms
 let lastAnalyzeAt = 0;
 
@@ -960,9 +967,8 @@ async function connect(){
     // v1.3: フリーズボタンを有効化 (フリーズ状態自体は引き継がない)
     setFreeze(false);
     updateFreezeAvailability();
-    // v1.4: 接続中はデモ不可、ガイドカードは実測体験を妨げないよう自動非表示
+    // v1.4: 接続中はデモ不可。ガイドは現在の表示状態をそのまま維持する。
     $('demoBtn').disabled = true;
-    setGuide(false);
     readLoop();
   } catch(e){
     console.error(e);
@@ -1075,19 +1081,65 @@ function setGuide(visible){
 }
 $('guideToggle').addEventListener('click', ()=>setGuide(!guideVisible));
 
-// v1.4: デモモード — 擬似データを通常のリングバッファに流す
-// y(t) = 10·sin(2π·3·t) + 5·sin(2π·6·t + 0.5) + 2·sin(2π·9·t + 1.0) + 微小ノイズ
-// 振幅にはゆるい envelope を掛けて単調にならないようにする (ピークは安定して 3/6/9 Hz)
-const DEMO_PERIOD_MS = 7;   // 約 140 Hz 相当の送信間隔
+// v1.4: デモモード — 擬似的だが「実測っぽい」振動データを生成
+// 構造:
+//   3 / 6 / 9 Hz の 3 本の sin (周波数はピーク安定のため固定)
+//   + 時間で大きく変動する振幅 envelope (ゆっくり呼吸する / 確率的にジャンプ / 別周期)
+//   + 5〜10 秒に 1 回ランダムなタイミングで発生する減衰衝撃 (叩き) — ~20 Hz の短いバースト
+//   + ホワイトノイズ ±1
+// FFT 結果には 3/6/9 Hz の 3 ピークが残るが、時間波形は不規則で実測のように見える。
+const DEMO_PERIOD_MS = 7;     // 約 140 Hz 相当の送信間隔
+let demoE2Value = 5;          // E2 は ~2 秒ごとに離散ランダム更新
+let demoE2NextAt = 0;
+let demoBurst = null;         // { startAt, amplitude, freq, decay } | null
+let demoNextBurstAt = 0;
+
 function demoTick(){
-  const t = (performance.now() - demoStartedAt) / 1000;
-  const A1 = 10 * (1 + 0.10 * Math.sin(0.3 * t));
-  const A2 = 5  * (1 + 0.10 * Math.sin(0.5 * t));
-  const A3 = 2;
-  const y = A1 * Math.sin(2*Math.PI*3*t + 0)
-          + A2 * Math.sin(2*Math.PI*6*t + 0.5)
-          + A3 * Math.sin(2*Math.PI*9*t + 1.0)
-          + (Math.random() - 0.5);   // ± 0.5 の白色ノイズ
+  const tNow = performance.now();
+  const t = (tNow - demoStartedAt) / 1000;
+
+  // 振幅 envelope (位相も時間で少しドリフト)
+  const E1  = 10 * (0.5 + 0.5 * Math.sin(0.4 * t));
+  if(tNow >= demoE2NextAt){
+    demoE2Value  = 5 * (0.3 + 0.7 * Math.random());
+    demoE2NextAt = tNow + 1800 + Math.random()*600;  // 約 2 秒ごと
+  }
+  const E2 = demoE2Value;
+  const E3 = 2 * (0.5 + 0.5 * Math.sin(0.7 * t + 1.0));
+  const phi1 = 0   + 0.05 * t;
+  const phi2 = 0.5 + 0.03 * t;
+  const phi3 = 1.0 + 0.07 * t;
+
+  let y = E1 * Math.sin(2*Math.PI*3*t + phi1)
+        + E2 * Math.sin(2*Math.PI*6*t + phi2)
+        + E3 * Math.sin(2*Math.PI*9*t + phi3);
+
+  // バースト (叩き衝撃) のスケジューリング
+  if(demoNextBurstAt === 0){
+    demoNextBurstAt = tNow + (5 + Math.random()*5) * 1000;
+  }
+  if(!demoBurst && tNow >= demoNextBurstAt){
+    demoBurst = {
+      startAt:   tNow,
+      amplitude: 5 + Math.random()*10,        // 5〜15
+      freq:      18 + Math.random()*14,       // 18〜32 Hz (3/6/9 Hz 帯と被らない)
+      decay:     0.3                          // 指数減衰 (e^(-dt/decay))
+    };
+    demoNextBurstAt = tNow + (5 + Math.random()*5) * 1000;
+  }
+  if(demoBurst){
+    const dt = (tNow - demoBurst.startAt) / 1000;
+    if(dt > demoBurst.decay * 5){
+      demoBurst = null;
+    } else {
+      const env = Math.exp(-dt / demoBurst.decay);
+      y += demoBurst.amplitude * env * Math.sin(2*Math.PI*demoBurst.freq*dt);
+    }
+  }
+
+  // ホワイトノイズ ±1
+  y += (Math.random() - 0.5) * 2;
+
   pushSample(y);
 }
 function startDemo(){
@@ -1097,6 +1149,9 @@ function startDemo(){
   ring = [];
   lastAnalyzeAt = 0;
   demoStartedAt = performance.now();
+  // バースト/E2 の状態リセット
+  demoE2Value = 5; demoE2NextAt = 0;
+  demoBurst = null; demoNextBurstAt = 0;
   demoInterval = setInterval(demoTick, DEMO_PERIOD_MS);
   // UI
   const btn = $('demoBtn');
@@ -1128,6 +1183,8 @@ function stopDemo(){
   $('fsInfo').textContent = 'fs ≒ -- Hz';
   $('hint').classList.remove('hidden');
   $('freezeBtn').disabled = true;
+  // v1.4: デモ停止でガイドカードは非表示に戻す
+  setGuide(false);
 }
 $('demoBtn').addEventListener('click', ()=>{
   if(isDemoMode) stopDemo();
@@ -1178,8 +1235,8 @@ requestAnimationFrame(()=>{
     compareChart.resize();
   }catch(e){}
 });
-// v1.4: 初期はガイドカードを表示 (接続前にシステムの意味を伝える)
-setGuide(true);
+// v1.4: 初期はガイドカードを非表示 (シンプルな画面で開始、必要に応じてトグル)
+setGuide(false);
 tick();
 </script>
 </body>
